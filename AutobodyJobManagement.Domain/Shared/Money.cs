@@ -1,0 +1,54 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Text;
+
+namespace AutobodyJobManagement.Domain.Shared;
+
+public record Money
+{
+    private Money(string currency, decimal amount)
+    {
+
+        Currency = currency;
+        Amount = decimal.Round(amount, 2);
+    }
+
+    public static Money Create(string currency, decimal amount)
+    {
+        Ensure.NotNullOrWhiteSpace(currency, "Currency cannot be null or empty");
+        Ensure.CharactersExactLength(currency, 3, "Currency must be a 3-letter ISO code");
+        Ensure.NotNegativeDecimal(amount, "Amount cannot be negative");
+
+        return new Money(currency, amount);
+    }
+    public string Currency {  get; }
+    public decimal Amount { get; }
+
+    public Money Add(Money other)
+    {
+        Ensure.NotNull(other, "Other can't be null");
+
+        if (Currency != other.Currency)
+            throw new DomainException("Cannot add money with different currencies.");
+
+        return new Money(Currency, Amount + other.Amount);
+    }
+
+    public Money Subtract(Money other)
+    {
+        Ensure.NotNull(other, "Other can't be null");
+
+        if (Currency != other.Currency)
+            throw new DomainException("Cannot subtract money with different currencies.");
+
+        return new Money(Currency, Amount - other.Amount);
+    }
+
+    //public bool Equals(Money? other)
+    //    => other is not null &&
+    //       Currency == other.Currency &&
+    //       Amount == other.Amount;
+    //public override int GetHashCode()
+    //    => HashCode.Combine(Currency, Amount);
+}

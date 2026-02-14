@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="AutobodyJobManagement.Domain/AutobodyJobManagement.Domain.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="AutobodyJobManagement.Domain.Tests/AutobodyJobManagement.Domain.Tests.csproj" Id="2b29cf1a-ea1a-4681-a68c-5bf9002d8023" />
+  </Folder>
+</Solution>

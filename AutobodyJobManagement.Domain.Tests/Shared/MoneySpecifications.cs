@@ -1,0 +1,92 @@
+﻿using AutobodyJobManagement.Domain.Shared;
+using AwesomeAssertions;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace AutobodyJobManagement.Domain.Tests.Shared;
+
+public class MoneySpecifications
+{
+    [Theory]
+    [InlineData("USD", 100)]
+    [InlineData("EUR", 50.5)]
+    [InlineData("JPY", 1000)]
+    public void Create_Should_Return_Money_When_Currency_And_Amount_Are_Valid(string currency, decimal amount)
+    {
+        var result = Money.Create(currency, amount);
+        result.Should().BeOfType<Money>();
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(null)]
+    public void Create_Should_Throw_ArgumentException_When_Currency_Length_Is_Empty_Or_Null(string currency)
+    {
+        Action act = () => Money.Create(currency, 50.5m);
+        act.Should().ThrowExactly<ArgumentException>().WithMessage($"Currency cannot be null or empty*");
+    }
+
+    [Theory]
+    [InlineData("USDD")]
+    [InlineData("EU")]
+    [InlineData("JPYYYYYY")]
+    public void Create_Should_Throw_ArgumentException_When_Currency_Length_Is_Invalid(string currency)
+    {
+        Action act = () => Money.Create(currency, 1000);
+        act.Should().ThrowExactly<ArgumentException>().WithMessage($"Currency must be a 3-letter ISO code*");
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    public void Create_Should_Throw_ArgumentException_When_Amount_Is_Negative(decimal amount)
+    {
+        Action act = () => Money.Create("USD", amount);
+        act.Should().ThrowExactly<ArgumentOutOfRangeException>().WithMessage($"Amount cannot be negative*");
+    }
+
+
+    [Theory]
+    [InlineData("USD", 100, 100, 200)]
+    [InlineData("EUR", 100, 50.5, 150.5)]
+    [InlineData("JPY", 100, 1000, 1100)]
+    public void Add_Should_Increment_Money_When_Other_Is_Valid(string currency, decimal originalAmount, decimal amount, decimal totalAmount)
+    {
+        var initialMoney = Money.Create(currency, originalAmount);
+        var result = initialMoney.Add(Money.Create(currency, amount));
+        result.Amount.Should().Be(totalAmount);
+    }
+
+    [Theory]
+    [InlineData("USD", "JPY")]
+    [InlineData("EUR", "USD")]
+    [InlineData("JPY", "PHP")]
+    public void Add_Should_Throw_ArgumentException_When_Other_Currency_Is_Different(string currency, string otherCurrency)
+    {
+        var initialMoney = Money.Create(currency, 100);
+        Action act = () => initialMoney.Add(Money.Create(otherCurrency, 100));
+        act.Should().ThrowExactly<DomainException>().WithMessage("Cannot add money with different currencies.");
+    }
+
+    [Theory]
+    [InlineData("USD", 1000, 100, 900)]
+    [InlineData("EUR", 1000, 50.5, 949.5)]
+    [InlineData("JPY", 1000, 500, 500)]
+    public void Subtract_Should_Reduce_Money_When_Other_Is_Valid(string currency, decimal originalAmount, decimal amount, decimal totalAmount)
+    {
+        var initialMoney = Money.Create(currency, originalAmount);
+        var result = initialMoney.Subtract(Money.Create(currency, amount));
+        result.Amount.Should().Be(totalAmount);
+    }
+
+    [Theory]
+    [InlineData("USD", "JPY")]
+    [InlineData("EUR", "USD")]
+    [InlineData("JPY", "PHP")]
+    public void Subtract_Should_Throw_ArgumentException_When_Other_Currency_Is_Different(string currency, string otherCurrency)
+    {
+        var initialMoney = Money.Create(currency, 100);
+        Action act = () => initialMoney.Subtract(Money.Create(otherCurrency, 100));
+        act.Should().ThrowExactly<DomainException>().WithMessage("Cannot subtract money with different currencies.");
+    }
+}
