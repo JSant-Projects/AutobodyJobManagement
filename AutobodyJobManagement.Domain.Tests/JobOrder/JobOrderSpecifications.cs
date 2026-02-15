@@ -25,7 +25,6 @@ public class JobOrderSpecifications
     [Fact]
     public void Create_Should_Throw_ArgumentException_When_VehicleId_Is_Null()
     {
-        // This is to test branch rule
         Action act = () => DomainJobOrder.Create(null!);
         act.Should().ThrowExactly<ArgumentException>().WithMessage("VehicleId can't be null*");
     }
