@@ -17,8 +17,8 @@ public class Estimate
 
     internal static Estimate Create(Money laborCost, Money partsCost)
     {
-        Ensure.NotNull(laborCost);
-        Ensure.NotNull(partsCost);
+        Ensure.NotNull(laborCost, "Labor cost can't be null");
+        Ensure.NotNull(partsCost, "Parts cost can't be null");
 
         return new Estimate(laborCost, partsCost);
         

@@ -26,7 +26,8 @@ public class JobOrder
 
     public static JobOrder Create(VehicleId vehicleId)
     {
-        Ensure.NotNull(vehicleId);
+        Ensure.NotNull(vehicleId, "VehicleId can't be null");
+        Ensure.NotEmptyGuid(vehicleId.Id, "VehicleId can't be empty");
 
         return new JobOrder(vehicleId, JobStatus.Draft);
     }

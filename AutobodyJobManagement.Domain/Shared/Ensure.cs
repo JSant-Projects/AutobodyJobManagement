@@ -18,6 +18,17 @@ public static class Ensure
         }
     }
 
+    public static void NotEmptyGuid(
+       Guid value,
+       string? message = null,
+       [CallerArgumentExpression("value")] string? paraName = null)
+    {
+        if (value == Guid.Empty)
+        {
+            throw new ArgumentException(message ?? "The value can't be null or empty", paraName);
+        }
+    }
+
     public static void CharactersExactLength(
        string value,
        int length,
