@@ -29,7 +29,8 @@ public class CustomerSpecifications
 
         var result = DomainCustomer.Create(personalInfoWithEmail, address);
         var expectedFullName = $"{inputFirstName} {inputLastName}";
-        result.PersonalInfo.FullName.Should().NotBeNull().And.Be(expectedFullName);
+        result.Should().NotBeNull();
+        result.PersonalInfo.Should().NotBeNull().And.BeEquivalentTo(personalInfoWithEmail);
         result.Address.Should().NotBeNull().And.BeEquivalentTo(address);
     }
 
