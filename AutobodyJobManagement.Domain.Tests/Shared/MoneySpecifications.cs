@@ -16,6 +16,9 @@ public class MoneySpecifications
     {
         var result = Money.Create(currency, amount);
         result.Should().BeOfType<Money>();
+        result.Should().NotBeNull();
+        result.Currency.Should().Be(currency);
+        result.Amount.Should().Be(amount);
     }
 
     [Theory]
