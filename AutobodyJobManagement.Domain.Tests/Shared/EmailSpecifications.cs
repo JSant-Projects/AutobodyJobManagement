@@ -17,6 +17,8 @@ public class EmailSpecifications
         var result = Email.Create(email);
 
         result.Should().BeOfType<Email>();
+        result.Should().NotBeNull();
+        result.Value.Should().Be(email);
     }
 
     [Theory]
