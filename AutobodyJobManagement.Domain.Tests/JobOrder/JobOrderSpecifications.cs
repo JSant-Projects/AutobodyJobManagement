@@ -17,7 +17,8 @@ public class JobOrderSpecifications
         var vehicleId = new VehicleId(Guid.NewGuid());
 
         var result = DomainJobOrder.Create(vehicleId);
-
+        
+        result.Should().NotBeNull();
         result.JobStatus.Should().Be(JobStatus.Draft);
         result.VehicleId.Should().Be(vehicleId);
     }
@@ -35,5 +36,22 @@ public class JobOrderSpecifications
         Action act = () => DomainJobOrder.Create(new VehicleId(Guid.Empty));
         act.Should().ThrowExactly<ArgumentException>().WithMessage("VehicleId can't be empty*");
     }
+
+    [Theory]
+    [InlineData("Repair plan notes", 5)]
+    [InlineData("Repair plan notes 1", 16)]
+    [InlineData("Repair plan notes 2", 24)]
+    public void CreateRepairPlan_Should_Return_RepairPlan_When_EstimatedDuration_Is_Valid(string notes, int hours)
+    {
+        var vehicleId = new VehicleId(Guid.NewGuid());
+        var jobOrder = DomainJobOrder.Create(vehicleId);
+        var estimatedDuration = TimeSpan.FromHours(hours);
+        jobOrder.CreateRepairPlan(notes, estimatedDuration);
+        jobOrder.RepairPlan.Should().NotBeNull();
+        jobOrder.RepairPlan.Notes.Should().Be(notes);
+        jobOrder.RepairPlan.EstimatedDuration.Should().Be(estimatedDuration);
+    }
+
+
 
 }
