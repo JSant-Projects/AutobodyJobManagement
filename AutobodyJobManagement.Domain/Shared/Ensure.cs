@@ -65,8 +65,19 @@ public static class Ensure
         }
     }
 
-    public static void NotNegativeDecimal(
+    public static void PositiveDecimal(
         decimal value,
+        string? message = null,
+        [CallerArgumentExpression("value")] string? paraName = null)
+    {
+        if (value < 0)
+        {
+            throw new ArgumentOutOfRangeException(paraName, value, message ?? "The value can't be out of range");
+        }
+    }
+
+    public static void PositiveInteger(
+        int value,
         string? message = null,
         [CallerArgumentExpression("value")] string? paraName = null)
     {
