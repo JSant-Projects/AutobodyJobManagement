@@ -102,4 +102,14 @@ public class MoneySpecifications
         Action act = () => initialMoney.Subtract(Money.Create(otherCurrency, 100));
         act.Should().ThrowExactly<DomainException>().WithMessage("Cannot operate on money with different currencies");
     }
+
+    [Theory]
+    [InlineData("USD", 100, 2, 200)]
+    [InlineData("CAD", 75.5, 3, 226.5)]
+    public void Multiply_Should_Return_Money_With_Multiplied_Amount_When_Factor_Is_Valid(string currency, decimal originalAmount, decimal factor, decimal totalAmount)
+    {
+        var initialMoney = Money.Create(currency, originalAmount);
+        var result = initialMoney.Multiply(factor);
+        result.Amount.Should().Be(totalAmount);
+    }
 }

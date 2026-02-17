@@ -18,7 +18,7 @@ public record Money
     {
         Ensure.NotNullOrWhiteSpace(currency, "Currency cannot be null or empty");
         Ensure.CharactersExactLength(currency, 3, "Currency must be a 3-letter ISO code");
-        Ensure.NotNegativeDecimal(amount, "Amount cannot be negative");
+        Ensure.PositiveDecimal(amount, "Amount cannot be negative");
 
         return new Money(currency, amount);
     }
@@ -48,6 +48,12 @@ public record Money
         EnsureSameCurrency(other);
 
         return new Money(Currency, Amount - other.Amount);
+    }
+
+    public Money Multiply(decimal factor)
+    {
+        Ensure.PositiveDecimal(factor, "Factor cannot be negative");
+        return new Money(Currency, Amount * factor);
     }
 
     private void EnsureSameCurrency(Money other)
