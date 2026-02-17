@@ -1,3 +1,3 @@
 ﻿namespace AutobodyJobManagement.Domain.JobOrder;
 
-public record JobOrderId(Guid Id);
+public sealed record JobOrderId(Guid Id);

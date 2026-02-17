@@ -1,3 +1,3 @@
 ﻿namespace AutobodyJobManagement.Domain.Customer;
 
-public record CustomerId(Guid Id);
+public sealed record CustomerId(Guid Id);
