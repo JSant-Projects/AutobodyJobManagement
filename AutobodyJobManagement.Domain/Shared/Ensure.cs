@@ -65,7 +65,7 @@ public static class Ensure
         }
     }
 
-    public static void PositiveDecimal(
+    public static void NonNegativeDecimal(
         decimal value,
         string? message = null,
         [CallerArgumentExpression("value")] string? paraName = null)
@@ -76,7 +76,7 @@ public static class Ensure
         }
     }
 
-    public static void PositiveInteger(
+    public static void NonNegativeInteger(
         int value,
         string? message = null,
         [CallerArgumentExpression("value")] string? paraName = null)

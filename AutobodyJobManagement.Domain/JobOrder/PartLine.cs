@@ -30,7 +30,7 @@ public class PartLine
     {
         Ensure.NotNullOrWhiteSpace(partNumber, "Part number cannot be null or empty");
         Ensure.NotNullOrWhiteSpace(description, "Description cannot be null or empty");
-        Ensure.PositiveInteger(quantity, "Quantity must be greater than zero");
+        Ensure.NonNegativeInteger(quantity, "Quantity must be greater than zero");
         Ensure.NotNull(unitPrice, "Unit price cannot be null");
 
         return new PartLine(partNumber, description, quantity, unitPrice);

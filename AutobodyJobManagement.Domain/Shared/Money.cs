@@ -11,14 +11,14 @@ public record Money
     {
 
         Currency = currency.ToUpperInvariant();
-        Amount = decimal.Round(amount, 2);
+        Amount = decimal.Round(amount, 2, MidpointRounding.AwayFromZero);
     }
 
     public static Money Create(string currency, decimal amount)
     {
         Ensure.NotNullOrWhiteSpace(currency, "Currency cannot be null or empty");
         Ensure.CharactersExactLength(currency, 3, "Currency must be a 3-letter ISO code");
-        Ensure.PositiveDecimal(amount, "Amount cannot be negative");
+        Ensure.NonNegativeDecimal(amount, "Amount cannot be negative");
 
         return new Money(currency, amount);
     }
@@ -52,7 +52,7 @@ public record Money
 
     public Money Multiply(decimal factor)
     {
-        Ensure.PositiveDecimal(factor, "Factor cannot be negative");
+        Ensure.NonNegativeDecimal(factor, "Factor cannot be negative");
         return new Money(Currency, Amount * factor);
     }
 

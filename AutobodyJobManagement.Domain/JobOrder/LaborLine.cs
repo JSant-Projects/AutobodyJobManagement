@@ -8,29 +8,41 @@ namespace AutobodyJobManagement.Domain.JobOrder;
 public class LaborLine
 {
     public string Description { get; }
-    public LaborHours LaborHours { get; }
+    public LaborHours LaborHours { get; private set; }
 
-    public Money Rate { get; }
-    public Money LineTotal => Rate.Multiply(LaborHours.Value);
+    public Money HourlyRate { get; private set; }
+    public Money LineTotal => HourlyRate.Multiply(LaborHours.Value);
 
     private LaborLine()
     {
         
     }
 
-    private LaborLine(string description, LaborHours laborHours, Money rate)
+    private LaborLine(string description, LaborHours laborHours, Money hourlyRate)
     {
         Description = description;
         LaborHours = laborHours;
-        Rate = rate;
+        HourlyRate = hourlyRate;
     }
 
-    internal static LaborLine Create(string description, LaborHours laborHours, Money rate)
+    internal static LaborLine Create(string description, LaborHours laborHours, Money hourlyRate)
     {
         Ensure.NotNullOrWhiteSpace(description, "Description cannot be null or empty");
         Ensure.NotNull(laborHours, "LaborHours cannot be null");
-        Ensure.NotNull(rate, "Rate cannot be null");
+        Ensure.NotNull(hourlyRate, "Rate cannot be null");
 
-        return new LaborLine(description, laborHours, rate);
+        return new LaborLine(description, laborHours, hourlyRate);
+    }
+
+    internal void AddHours(LaborHours additionalHours)
+    {
+        Ensure.NotNull(additionalHours);
+        LaborHours = LaborHours.Add(additionalHours); // implement Add on the VO
+    }
+
+    internal void UpdateHourlyRate(Money newRate)
+    {
+        Ensure.NotNull(newRate);
+        HourlyRate = newRate;
     }
 }

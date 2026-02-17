@@ -32,10 +32,28 @@ public class JobOrder
         return new JobOrder(vehicleId, JobStatus.Draft);
     }
 
-    public void CreateEstimate(Money laborCost, Money partsCost)
+    public void CreateEstimate()
     {
-        Estimate = Estimate.Create(laborCost, partsCost);
+        Estimate = Estimate.Create();
         JobStatus = JobStatus.Estimated;
+    }
+    
+    public void AddLaborLineToEstimate(string description, decimal laborHours, decimal hourlyRate)
+    {
+        if (Estimate is null)
+        {
+            throw new DomainException("Job must have an estimate to add labor lines");
+        }
+        Estimate.AddLaborLine(description, laborHours, hourlyRate);
+    }
+
+    public void AddPartLineToEstimate(string partNumber, string description, int quantity, decimal unitPrice)
+    {
+        if (Estimate is null)
+        {
+            throw new DomainException("Job must have an estimate to add part lines");
+        }
+        Estimate.AddPartLine(partNumber, description, quantity, unitPrice);
     }
 
     public void ApproveEstimate()
