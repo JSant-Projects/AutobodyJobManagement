@@ -21,6 +21,16 @@ public class MoneySpecifications
         result.Amount.Should().Be(amount);
     }
 
+    [Fact]
+    public void Zero_Should_Return_Money_With_Zero_Amount_When_Currency_Is_Valid()
+    {
+        var result = Money.Zero("USD");
+        result.Should().BeOfType<Money>();
+        result.Should().NotBeNull();
+        result.Currency.Should().Be("USD");
+        result.Amount.Should().Be(0);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(null)]
@@ -68,7 +78,7 @@ public class MoneySpecifications
     {
         var initialMoney = Money.Create(currency, 100);
         Action act = () => initialMoney.Add(Money.Create(otherCurrency, 100));
-        act.Should().ThrowExactly<DomainException>().WithMessage("Cannot add money with different currencies.");
+        act.Should().ThrowExactly<DomainException>().WithMessage("Cannot operate on money with different currencies");
     }
 
     [Theory]
@@ -90,6 +100,6 @@ public class MoneySpecifications
     {
         var initialMoney = Money.Create(currency, 100);
         Action act = () => initialMoney.Subtract(Money.Create(otherCurrency, 100));
-        act.Should().ThrowExactly<DomainException>().WithMessage("Cannot subtract money with different currencies.");
+        act.Should().ThrowExactly<DomainException>().WithMessage("Cannot operate on money with different currencies");
     }
 }

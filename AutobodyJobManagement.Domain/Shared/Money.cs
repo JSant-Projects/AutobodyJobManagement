@@ -10,7 +10,7 @@ public record Money
     private Money(string currency, decimal amount)
     {
 
-        Currency = currency;
+        Currency = currency.ToUpperInvariant();
         Amount = decimal.Round(amount, 2);
     }
 
@@ -22,6 +22,13 @@ public record Money
 
         return new Money(currency, amount);
     }
+
+    public static Money Zero(string currency)
+    {
+        Ensure.NotNullOrWhiteSpace(currency, "Currency cannot be null or empty");
+        Ensure.CharactersExactLength(currency, 3, "Currency must be a 3-letter ISO code");
+        return new Money(currency, 0);
+    }
     public string Currency {  get; }
     public decimal Amount { get; }
 
@@ -29,8 +36,7 @@ public record Money
     {
         Ensure.NotNull(other, "Other can't be null");
 
-        if (Currency != other.Currency)
-            throw new DomainException("Cannot add money with different currencies.");
+        EnsureSameCurrency(other);
 
         return new Money(Currency, Amount + other.Amount);
     }
@@ -39,10 +45,15 @@ public record Money
     {
         Ensure.NotNull(other, "Other can't be null");
 
-        if (Currency != other.Currency)
-            throw new DomainException("Cannot subtract money with different currencies.");
+        EnsureSameCurrency(other);
 
         return new Money(Currency, Amount - other.Amount);
+    }
+
+    private void EnsureSameCurrency(Money other)
+    {
+        if (Currency != other.Currency)
+            throw new DomainException("Cannot operate on money with different currencies");
     }
 
     //public bool Equals(Money? other)
