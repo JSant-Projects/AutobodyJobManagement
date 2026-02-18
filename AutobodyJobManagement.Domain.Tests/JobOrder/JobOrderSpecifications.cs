@@ -126,7 +126,29 @@ public class JobOrderSpecifications
 
         Action act = () => jobOrder.CreateEstimate(null, null, "CAD");
 
-        act.Should().Throw<DomainException>().WithMessage("Estimate must contain either labor or part lines");
+        act.Should().ThrowExactly<DomainException>().WithMessage("Estimate must contain either labor or part lines");
+    }
+
+    [Fact] 
+    public void CreateEstimate_Should_Throw_DomainException_When_Estimate_Already_Exist()
+    { 
+        IReadOnlyList<(string description, decimal laborHours, decimal hourlyRate)> laborLines = 
+            [
+                ("Body", 5.5m, 75.5m), 
+                ("Paint", 3, 75.5m),
+            ]; 
+        IReadOnlyList<(string partNumber, string description, int quantity, decimal unitPrice)> partLines = 
+            [
+                ("ABCDE123", "LF Door Moulding", 1, 25.50m)
+            ]; var vehicleId = new VehicleId(Guid.NewGuid());
+        
+        var jobOrder = DomainJobOrder.Create(vehicleId); 
+        jobOrder.CreateEstimate(laborLines, partLines, "CAD");
+
+        Action act = () => jobOrder.CreateEstimate(laborLines, partLines, "CAD");
+
+        act.Should().ThrowExactly<DomainException>().WithMessage("Estimate already exists. Use ReviseEstimate");
+
     }
 
     [Fact]
