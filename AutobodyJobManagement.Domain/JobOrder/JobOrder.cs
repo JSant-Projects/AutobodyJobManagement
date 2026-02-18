@@ -12,9 +12,8 @@ public class JobOrder
     public JobOrderId JobOrderId { get; }
     public VehicleId VehicleId { get; }
     public JobStatus JobStatus { get; private set; }
-    public RepairPlan? RepairPlan { get; private set; }
 
-    public Estimate? Estimate { get; private set; }
+    public Estimate? CurrentEstimate { get; private set; }
 
     private JobOrder() { }
     private JobOrder(VehicleId vehicleId, JobStatus jobStatus)
@@ -32,33 +31,50 @@ public class JobOrder
         return new JobOrder(vehicleId, JobStatus.Draft);
     }
 
-    public void CreateEstimate()
+    public void CreateEstimate(
+        IReadOnlyList<(string description, decimal laborHours, decimal hourlyRate)>? estimateLaborLines,
+        IReadOnlyList<(string partNumber, string description, int quantity, decimal unitPrice)>? estimatePartLines,
+        string currency
+        )
     {
-        Estimate = Estimate.Create();
-        JobStatus = JobStatus.Estimated;
-    }
-    
-    public void AddLaborLineToEstimate(string description, decimal laborHours, decimal hourlyRate)
-    {
-        if (Estimate is null)
-        {
-            throw new DomainException("Job must have an estimate to add labor lines");
-        }
-        Estimate.AddLaborLine(description, laborHours, hourlyRate);
-    }
+        estimateLaborLines ??= Array.Empty<(string, decimal, decimal)>();
+        estimatePartLines ??= Array.Empty<(string, string, int, decimal)>();
 
-    public void AddPartLineToEstimate(string partNumber, string description, int quantity, decimal unitPrice)
-    {
-        if (Estimate is null)
+        Ensure.NotNullOrWhiteSpace(currency);
+        currency = currency.Trim().ToUpperInvariant();
+
+        if (CurrentEstimate is not null)
         {
-            throw new DomainException("Job must have an estimate to add part lines");
+            throw new DomainException("Estimate already exists. Use ReviseEstimate");
         }
-        Estimate.AddPartLine(partNumber, description, quantity, unitPrice);
+
+        var laborLines = new List<LaborLine>();
+        var partLines = new List<PartLine>();
+
+        // Build laborlines
+        foreach (var line in estimateLaborLines) 
+        {
+            var laborHours = LaborHours.Create(line.laborHours);
+            var hourlyRate = Money.Create(currency, line.hourlyRate);
+            laborLines.Add(LaborLine.Create(line.description, laborHours, hourlyRate));
+        }
+
+        // Build partlines
+        foreach (var line in estimatePartLines)
+        {
+            var unitPrice = Money.Create(currency, line.unitPrice);
+            partLines.Add(PartLine.Create(line.partNumber, line.description, line.quantity, unitPrice));
+
+        }
+
+        CurrentEstimate = Estimate.Create(laborLines, partLines, currency);
+
+        JobStatus = JobStatus.Estimated;
     }
 
     public void ApproveEstimate()
     {
-        if (Estimate is null)
+        if (CurrentEstimate is null)
         {
             throw new DomainException("Cannot approve job without estimate");
         }
@@ -71,26 +87,9 @@ public class JobOrder
         JobStatus = JobStatus.Approved;
     }
 
-    public void CreateRepairPlan(string notes, TimeSpan estimatedDuration)
-    {
-        RepairPlan = RepairPlan.Create(notes, estimatedDuration);
-    }
-
-    public void AddRequiredPart(string partNumber, string description, int quantity, string supplier)
-    {
-        if (RepairPlan is null)
-        {
-            throw new DomainException("Job must have repair plan to add required parts");
-        }
-
-        var date = DateTime.UtcNow;
-        RepairPlan.AddRequiredParts(partNumber, description, quantity, supplier, date);
-        JobStatus = JobStatus.WaitingForParts;
-    }
-
     public void StartRepair()
     {
-        if (RepairPlan is null)
+        if (CurrentEstimate is null)
         {
             throw new DomainException("Job must have repair plan to start the repair");
         }

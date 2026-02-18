@@ -1,57 +1,46 @@
 ﻿using AutobodyJobManagement.Domain.Shared;
+using System.Runtime.Versioning;
 using System.Text;
 
 namespace AutobodyJobManagement.Domain.JobOrder;
 
 public class Estimate
 {
-    public EstimateId EstimateId { get; }
-    private readonly List<LaborLine> _laborLines = new();
-    private readonly List<PartLine> _partLines = new();
-
-    public IReadOnlyList<LaborLine> LaborLines => _laborLines;
-    public IReadOnlyList<PartLine> PartLines => _partLines;
+    public IReadOnlyList<LaborLine> LaborLines { get; }
+    public IReadOnlyList<PartLine> PartLines { get; }
 
     public string Currency { get; }
 
     public Money LaborCost =>
-        _laborLines
+        LaborLines
         .Select(x => x.LineTotal)
         .Aggregate(Money.Zero(Currency), (acc, next) => acc.Add(next));
 
 
     public Money PartsCost =>
-        _partLines
+        PartLines
         .Select(x => x.LineTotal)
         .Aggregate(Money.Zero(Currency), (acc, next) => acc.Add(next));
     public Money TotalCost => LaborCost.Add(PartsCost);
 
-    private Estimate(string currency)
+    private Estimate(IReadOnlyList<LaborLine> laborLines, IReadOnlyList<PartLine> partLines, string currency)
     {
-        EstimateId = new EstimateId(Guid.NewGuid());
+        LaborLines = laborLines;
+        PartLines = partLines;
         Currency = currency;
     }
 
-    internal static Estimate Create(string currency = "CAD")
+    internal static Estimate Create(IReadOnlyList<LaborLine> laborLines, IReadOnlyList<PartLine> partLines, string currency = "CAD")
     {
-        Ensure.CharactersExactLength(currency, 3, "Currency code must be a 3-character ISO code.");
-        return new Estimate(currency);
-    }
+        if (laborLines.Count == 0 && partLines.Count == 0)
+        {
+            throw new DomainException("Estimate must contain either labor or part lines");
+        }
 
-    internal void AddLaborLine(string description, decimal laborHours, decimal hourlyRateAmount)
-    {
-        var hours = LaborHours.Create(laborHours);
-        var hourlyRate = Money.Create(Currency, hourlyRateAmount);
+        var laborCopy = laborLines.ToList().AsReadOnly();
+        var partCopy = partLines.ToList().AsReadOnly();
 
-        var laborLine = LaborLine.Create(description, hours, hourlyRate);
-        _laborLines.Add(laborLine);
-    }
-
-    internal void AddPartLine(string partNumber, string description, int quantity, decimal unitPriceAmount)
-    {
-        var unitPrice = Money.Create(Currency, unitPriceAmount);
-        var partLine = PartLine.Create(partNumber, description, quantity, unitPrice);
-        _partLines.Add(partLine);
+        return new Estimate(laborCopy, partCopy, currency);
     }
 
 }
