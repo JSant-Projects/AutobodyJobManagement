@@ -16,15 +16,15 @@ public class JobOrderSpecifications
         // Scenario 1 (your original)
         yield return new object[]
         {
-            new List<(string, decimal, decimal)>
+            new List<EstimateLaborLineData>
             {
-                ("Body", 5.5m, 75.5m),
-                ("Paint", 3m, 75.5m)
+                new EstimateLaborLineData("Body", 5.5m, 75.5m),
+                new EstimateLaborLineData("Paint", 3m, 75.5m)
             },
-            new List<(string, string, int, decimal)>
-            {
-                ("ABCDE123", "LF Door Moulding", 1, 25.50m)
-            },
+            new List<EstimatePartLineData>
+             {
+                new EstimatePartLineData("ABCDE123", "LF Door Moulding", 1, 25.50m)
+             },
             641.75m,
             25.50m,
             667.25m
@@ -33,14 +33,14 @@ public class JobOrderSpecifications
         // Scenario 2 – Single labor, multiple parts
         yield return new object[]
         {
-            new List<(string, decimal, decimal)>
+            new List<EstimateLaborLineData>
             {
-                ("Frame Repair", 2m, 100m) // 200
+                new EstimateLaborLineData("Frame Repair", 2m, 100m) // 200
             },
-            new List<(string, string, int, decimal)>
+            new List<EstimatePartLineData>
             {
-                ("XYZ123", "Front Bumper", 2, 50m),   // 100
-                ("ABC789", "Headlight", 1, 120m)     // 120
+                new EstimatePartLineData("XYZ123", "Front Bumper", 2, 50m), // 100
+                new EstimatePartLineData("ABC789", "Headlight", 1, 120m) // 120
             },
             200m,
             220m,
@@ -50,16 +50,17 @@ public class JobOrderSpecifications
         // Scenario 3 – Multiple labor, multiple parts, mixed rates
         yield return new object[]
         {
-            new List<(string, decimal, decimal)>
+            new List<EstimateLaborLineData>
             {
-                ("Body Work", 4m, 80m),   // 320
-                ("Paint", 2.5m, 90m),     // 225
-                ("Polish", 1m, 60m)       // 60
+                new EstimateLaborLineData("Body Work", 4m, 80m), // 320
+                new EstimateLaborLineData("Paint", 2.5m, 90m),  // 225
+                new EstimateLaborLineData("Polish", 1m, 60m) // 60
             },
-            new List<(string, string, int, decimal)>
+
+            new List<EstimatePartLineData>
             {
-                ("PART1", "Door Handle", 2, 30m),   // 60
-                ("PART2", "Mirror", 1, 75m)         // 75
+                new EstimatePartLineData("PART1", "Door Handle", 2, 30m),   // 60
+                new EstimatePartLineData("PART2", "Mirror", 1, 75m)         // 75
             },
             605m,
             135m,
@@ -69,11 +70,11 @@ public class JobOrderSpecifications
         // Scenario 4 – Multiple labor, No, mixed rates
         yield return new object[]
         {
-            new List<(string, decimal, decimal)>
+            new List<EstimateLaborLineData>
             {
-                ("Body Work", 4m, 80m),   // 320
-                ("Paint", 2.5m, 90m),     // 225
-                ("Polish", 1m, 60m)       // 60
+                new EstimateLaborLineData("Body Work", 4m, 80m), // 320
+                new EstimateLaborLineData("Paint", 2.5m, 90m),  // 225
+                new EstimateLaborLineData("Polish", 1m, 60m) // 60
             },
             null!,
             605m,
@@ -98,8 +99,8 @@ public class JobOrderSpecifications
     [Theory]
     [MemberData(nameof(CreateEstimateTestData))]
     public void CreateEstimate_Should_Create_CurrrentEstimate_When_LaborLines_And_PartLine_Are_Valid(
-        IReadOnlyList<(string description, decimal laborHours, decimal hourlyRate)> laborLines,
-        IReadOnlyList<(string partNumber, string description, int quantity, decimal unitPrice)> partLines,
+        IReadOnlyList<EstimateLaborLineData> laborLines,
+        IReadOnlyList<EstimatePartLineData> partLines,
         decimal expectedLaborCost,
         decimal expectedPartsCost,
         decimal expectedTotalCost) 
@@ -132,15 +133,17 @@ public class JobOrderSpecifications
     [Fact] 
     public void CreateEstimate_Should_Throw_DomainException_When_Estimate_Already_Exist()
     { 
-        IReadOnlyList<(string description, decimal laborHours, decimal hourlyRate)> laborLines = 
+        IReadOnlyList<EstimateLaborLineData> laborLines = 
             [
-                ("Body", 5.5m, 75.5m), 
-                ("Paint", 3, 75.5m),
+                new EstimateLaborLineData("Body", 5.5m, 75.5m), 
+                new EstimateLaborLineData("Paint", 3, 75.5m),
+            ];
+        IReadOnlyList<EstimatePartLineData> partLines = 
+            [
+                new EstimatePartLineData("ABCDE123", "LF Door Moulding", 1, 25.50m)
             ]; 
-        IReadOnlyList<(string partNumber, string description, int quantity, decimal unitPrice)> partLines = 
-            [
-                ("ABCDE123", "LF Door Moulding", 1, 25.50m)
-            ]; var vehicleId = new VehicleId(Guid.NewGuid());
+        
+        var vehicleId = new VehicleId(Guid.NewGuid());
         
         var jobOrder = DomainJobOrder.Create(vehicleId); 
         jobOrder.CreateEstimate(laborLines, partLines, "CAD");

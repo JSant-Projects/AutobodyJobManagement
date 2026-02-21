@@ -32,42 +32,42 @@ public class JobOrder
     }
 
     public void CreateEstimate(
-        IReadOnlyList<(string description, decimal laborHours, decimal hourlyRate)>? estimateLaborLines,
-        IReadOnlyList<(string partNumber, string description, int quantity, decimal unitPrice)>? estimatePartLines,
+        IReadOnlyList<EstimateLaborLineData>? estimateLaborLines,
+        IReadOnlyList<EstimatePartLineData>? estimatePartLines,
         string currency
         )
     {
-        estimateLaborLines ??= Array.Empty<(string, decimal, decimal)>();
-        estimatePartLines ??= Array.Empty<(string, string, int, decimal)>();
+        estimateLaborLines ??= Array.Empty<EstimateLaborLineData>();
+        estimatePartLines ??= Array.Empty<EstimatePartLineData>();
 
         Ensure.NotNullOrWhiteSpace(currency);
-        currency = currency.Trim().ToUpperInvariant();
+        var normalizedCurrency = currency.Trim().ToUpperInvariant();
 
         if (CurrentEstimate is not null)
         {
             throw new DomainException("Estimate already exists. Use ReviseEstimate");
         }
 
-        var laborLines = new List<LaborLine>();
-        var partLines = new List<PartLine>();
+        var laborLines = new List<LaborLine>(estimateLaborLines.Count);
+        var partLines = new List<PartLine>(estimatePartLines.Count);
 
         // Build laborlines
         foreach (var line in estimateLaborLines) 
         {
-            var laborHours = LaborHours.Create(line.laborHours);
-            var hourlyRate = Money.Create(currency, line.hourlyRate);
-            laborLines.Add(LaborLine.Create(line.description, laborHours, hourlyRate));
+            var laborHours = LaborHours.Create(line.Hours);
+            var hourlyRate = Money.Create(normalizedCurrency, line.HourlyRate);
+            laborLines.Add(LaborLine.Create(line.Description, laborHours, hourlyRate));
         }
 
         // Build partlines
         foreach (var line in estimatePartLines)
         {
-            var unitPrice = Money.Create(currency, line.unitPrice);
-            partLines.Add(PartLine.Create(line.partNumber, line.description, line.quantity, unitPrice));
+            var unitPrice = Money.Create(normalizedCurrency, line.UnitPrice);
+            partLines.Add(PartLine.Create(line.PartNumber, line.Description, line.Quantity, unitPrice));
 
         }
 
-        CurrentEstimate = Estimate.Create(laborLines, partLines, currency);
+        CurrentEstimate = Estimate.Create(laborLines, partLines, normalizedCurrency);
 
         JobStatus = JobStatus.Estimated;
     }
