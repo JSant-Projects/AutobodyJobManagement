@@ -12,8 +12,9 @@ public class JobOrder
     public JobOrderId JobOrderId { get; }
     public VehicleId VehicleId { get; }
     public JobStatus JobStatus { get; private set; }
-
     public Estimate? CurrentEstimate { get; private set; }
+    public readonly List<EstimateRevision> _estimateRevisions = new();
+    public IReadOnlyList<EstimateRevision> EstimateRevisions => _estimateRevisions.AsReadOnly();
 
     private JobOrder() { }
     private JobOrder(VehicleId vehicleId, JobStatus jobStatus)
@@ -48,28 +49,41 @@ public class JobOrder
             throw new DomainException("Estimate already exists. Use ReviseEstimate");
         }
 
-        var laborLines = new List<LaborLine>(estimateLaborLines.Count);
-        var partLines = new List<PartLine>(estimatePartLines.Count);
-
-        // Build laborlines
-        foreach (var line in estimateLaborLines) 
-        {
-            var laborHours = LaborHours.Create(line.Hours);
-            var hourlyRate = Money.Create(normalizedCurrency, line.HourlyRate);
-            laborLines.Add(LaborLine.Create(line.Description, laborHours, hourlyRate));
-        }
-
-        // Build partlines
-        foreach (var line in estimatePartLines)
-        {
-            var unitPrice = Money.Create(normalizedCurrency, line.UnitPrice);
-            partLines.Add(PartLine.Create(line.PartNumber, line.Description, line.Quantity, unitPrice));
-
-        }
-
-        CurrentEstimate = Estimate.Create(laborLines, partLines, normalizedCurrency);
+        CurrentEstimate = Estimate.Create(estimateLaborLines, estimatePartLines, normalizedCurrency);
 
         JobStatus = JobStatus.Estimated;
+    }
+
+    public void UpdateEstimate(
+        IReadOnlyList<EstimateLaborLineData>? updatedEstimateLaborLines,
+        IReadOnlyList<EstimatePartLineData>? updatedEstimatePartLines,
+        string currency,
+        string? reason = null
+        )
+    {
+        updatedEstimateLaborLines ??= Array.Empty<EstimateLaborLineData>();
+        updatedEstimatePartLines ??= Array.Empty<EstimatePartLineData>();
+
+        Ensure.NotNullOrWhiteSpace(currency);
+        var normalizedCurrency = currency.Trim().ToUpperInvariant();
+
+        if (CurrentEstimate is null)
+        {
+            throw new DomainException("No existing estimate to update. Use CreateEstimate");
+        }
+
+        var newEstimate = Estimate.Create(updatedEstimateLaborLines, updatedEstimatePartLines, normalizedCurrency);
+
+        AddEstimateRevision(CurrentEstimate, reason);
+
+        CurrentEstimate = newEstimate;
+
+    }
+
+    private void AddEstimateRevision(Estimate estimate, string? reason)
+    {
+        var next = _estimateRevisions.Count + 1;
+        _estimateRevisions.Add(new EstimateRevision(next, estimate, DateTime.UtcNow, reason));
     }
 
     public void ApproveEstimate()

@@ -119,6 +119,82 @@ public class JobOrderSpecifications
     }
 
     [Fact]
+    public void UpdateEstimate_Should_Update_CurrrentEstimate_When_LaborLines_And_PartLine_Are_Valid()
+    {
+        var vehicleId = new VehicleId(Guid.NewGuid());
+        var jobOrder = DomainJobOrder.Create(vehicleId);
+        IReadOnlyList<EstimateLaborLineData> laborLines =
+            [
+                new EstimateLaborLineData("Body", 5.5m, 75.5m),
+                new EstimateLaborLineData("Paint", 3, 75.5m),
+            ];
+        IReadOnlyList<EstimatePartLineData> partLines =
+            [
+                new EstimatePartLineData("ABCDE123", "LF Door Moulding", 1, 25.50m)
+            ];
+        jobOrder.CreateEstimate(laborLines, partLines, "CAD");
+        // Update with new lines
+        IReadOnlyList<EstimateLaborLineData> updatedLaborLines =
+            [
+                new EstimateLaborLineData("Body", 6m, 80m), // Updated hours and rate
+                new EstimateLaborLineData("Paint", 4m, 85m) // Updated hours and rate
+            ];
+        IReadOnlyList<EstimatePartLineData> updatedPartLines =
+            [
+                new EstimatePartLineData("ABCDE123", "LF Door Moulding", 2, 25.50m) // Updated quantity
+            ];
+        jobOrder.UpdateEstimate(updatedLaborLines, updatedPartLines, "CAD");
+        jobOrder.CurrentEstimate.Should().NotBeNull();
+        jobOrder.CurrentEstimate.LaborCost.Amount.Should().Be(6 * 80 + 4 * 85); // 480 + 340 = 820
+        jobOrder.CurrentEstimate.PartsCost.Amount.Should().Be(2 * 25.50m); // 51
+        jobOrder.CurrentEstimate.TotalCost.Amount.Should().Be(820 + 51); // 871
+    }
+
+    [Fact]
+    public void UpdateEstimate_Should_Throw_DomainException_When_Estimate_Does_Not_Exist()
+    {
+        var vehicleId = new VehicleId(Guid.NewGuid());
+        var jobOrder = DomainJobOrder.Create(vehicleId);
+        Action act = () => jobOrder.UpdateEstimate(null, null, "CAD");
+        act.Should().ThrowExactly<DomainException>().WithMessage("No existing estimate to update. Use CreateEstimate");
+    }
+
+    [Fact]
+    public void UpdateEstimate_Should_Add_EstimateRevision_To_EstimateRevisions()
+    {
+        var vehicleId = new VehicleId(Guid.NewGuid());
+        var jobOrder = DomainJobOrder.Create(vehicleId);
+        IReadOnlyList<EstimateLaborLineData> laborLines =
+            [
+                new EstimateLaborLineData("Body", 5.5m, 75.5m),
+                new EstimateLaborLineData("Paint", 3, 75.5m),
+            ];
+        IReadOnlyList<EstimatePartLineData> partLines =
+            [
+                new EstimatePartLineData("ABCDE123", "LF Door Moulding", 1, 25.50m)
+            ];
+        jobOrder.CreateEstimate(laborLines, partLines, "CAD");
+        // Update with new lines
+        IReadOnlyList<EstimateLaborLineData> updatedLaborLines =
+            [
+                new EstimateLaborLineData("Body", 6m, 80m), // Updated hours and rate
+                new EstimateLaborLineData("Paint", 4m, 85m) // Updated hours and rate
+            ];
+        IReadOnlyList<EstimatePartLineData> updatedPartLines =
+            [
+                new EstimatePartLineData("ABCDE123", "LF Door Moulding", 2, 25.50m) // Updated quantity
+            ];
+        jobOrder.UpdateEstimate(updatedLaborLines, updatedPartLines, "CAD");
+        jobOrder.EstimateRevisions.Should().HaveCount(1);
+        var revision = jobOrder.EstimateRevisions[0];
+        revision.RevisionNumber.Should().Be(1);
+        revision.Estimate.LaborCost.Amount.Should().Be(5.5m * 75.5m + 3 * 75.5m); // Original labor cost
+        revision.Estimate.PartsCost.Amount.Should().Be(1 * 25.50m); // Original parts cost
+        revision.Estimate.TotalCost.Amount.Should().Be(5.5m * 75.5m + 3 * 75.5m + 1 * 25.50m); // Original total cost
+        revision.Reason.Should().BeNull();
+    }
+
+    [Fact]
     public void CreateEstimate_Should_Throw_DomainException_When_LaborLines_And_PartLines_Are_Null()
     {
         var vehicleId = new VehicleId(Guid.NewGuid());

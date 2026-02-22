@@ -30,17 +30,40 @@ public class Estimate
         Currency = currency;
     }
 
-    internal static Estimate Create(IReadOnlyList<LaborLine> laborLines, IReadOnlyList<PartLine> partLines, string currency = "CAD")
+    internal static Estimate Create(
+        IReadOnlyList<EstimateLaborLineData> estimateLaborLines, 
+        IReadOnlyList<EstimatePartLineData> estimatePartLines, 
+        string currency = "CAD")
     {
-        if (laborLines.Count == 0 && partLines.Count == 0)
+        if (estimateLaborLines.Count == 0 && estimatePartLines.Count == 0)
         {
             throw new DomainException("Estimate must contain either labor or part lines");
         }
 
-        var laborCopy = laborLines.ToList().AsReadOnly();
-        var partCopy = partLines.ToList().AsReadOnly();
+        var estimateLaborLinesCopy = estimateLaborLines.ToList().AsReadOnly();
+        var estimatePartLinesCopy = estimatePartLines.ToList().AsReadOnly();
 
-        return new Estimate(laborCopy, partCopy, currency);
+        var laborLines = new List<LaborLine>(estimateLaborLinesCopy.Count);
+        var partLines = new List<PartLine>(estimatePartLinesCopy.Count);
+
+        // Build laborlines
+        foreach (var line in estimateLaborLinesCopy)
+        {
+            var laborHours = LaborHours.Create(line.Hours);
+            var hourlyRate = Money.Create(currency, line.HourlyRate);
+            laborLines.Add(LaborLine.Create(line.Description, laborHours, hourlyRate));
+        }
+
+        // Build partlines
+        foreach (var line in estimatePartLines)
+        {
+            var unitPrice = Money.Create(currency, line.UnitPrice);
+            partLines.Add(PartLine.Create(line.PartNumber, line.Description, line.Quantity, unitPrice));
+
+        }
+
+
+        return new Estimate(laborLines, partLines, currency);
     }
 
 }
