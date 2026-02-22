@@ -11,9 +11,9 @@ public class Customer
     public PersonalInfo PersonalInfo { get; }
     public Address Address { get; }
 
-    private List<Vehicle> _vehicles = new();
+    private readonly List<Vehicle> _vehicles = new();
 
-    public IReadOnlyList<Vehicle> Vehicles => _vehicles.ToList();
+    public IReadOnlyList<Vehicle> Vehicles => _vehicles.AsReadOnly();
 
     private Customer() { }
     private Customer(PersonalInfo personalInfo, Address address)
